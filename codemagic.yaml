@@ -1,0 +1,44 @@
+workflows:
+  ios-build:
+    name: iOS Build and Release
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: latest
+    triggering:
+      - push
+    scripts:
+      - name: Set up code signing
+        script: |
+          # Per il code signing, dovrai configurare gli Environment Variables in Codemagic UI
+          # o usare i secret di GitHub Actions se hai configurato lì.
+          # Qui andrebbero i comandi per importare certificati e profili di provisioning.
+          # Ad esempio, per i segreti in Codemagic:
+          # echo $CM_CERTIFICATE | base64 --decode > /tmp/certificate.p12
+          # security import /tmp/certificate.p12 -k ~/Library/Keychains/login.keychain -P $CM_CERTIFICATE_PASSWORD
+          # mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          # echo $CM_PROVISIONING_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/$CM_PROVISIONING_PROFILE_NAME.mobileprovision
+          #
+          # Maggiori dettagli sulla configurazione della firma del codice si trovano nella documentazione Codemagic:
+          # https://docs.codemagic.io/getting-started/signing-ios/
+
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=$CM_EXPORT_OPTIONS_PATH \
+            --no-codesign # Rimuovi --no-codesign se configuri il code signing
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - your_email@example.com
+        success: true
+        failure: true
